@@ -6,7 +6,7 @@ Each of the data items of the dataset comprises of the following fields: 'ups', 
 We focus on the fields 'documents' and 'tldr', as these are relevant to the task of summarization.
 
 
-# Filtering steps applied in this notebook
+## Filtering steps applied in this notebook
 
 Step 1: inspect Reddit TIFU for duplicates of the source texts ('documents' column).
 
@@ -28,7 +28,7 @@ Step 7:  Compare the corresponding source texts ('documents' column) to figure o
     •	this way of computing similarity is based on the approach used in *Zhang, J., Zhao, Y., Saleh, M., & Liu, P. (2020, November). Pegasus: Pre-training with        extracted gap-sentences for abstractive summarization. In International Conference on Machine Learning (pp. 11328-11339). PMLR.*
 
     
-# Findings of the filtering process
+## Findings of the filtering process
 
 Reddit TIFU does contain duplicates, more specifically:
 1.	38 exact duplicates
