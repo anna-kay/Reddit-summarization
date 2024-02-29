@@ -26,8 +26,7 @@ We focus on the fields 'documents' and 'tldr', as these are relevant to the task
     
   * that are not useful
 
-**Step 6:**  inspect the rest of the dataset for duplicates of summaries (column 'tldr' -> 'clean_text'), i.e., find the candidate duplicates based on the 'tldr' column
-            Then compare the corresponding source texts ('documents' column) to figure out if they are actual duplicates.
+**Step 6:**  inspect the rest of the dataset for duplicates of summaries (column 'tldr' -> 'clean_text'), i.e., find the candidate duplicates based on the 'tldr' column. Then compare the corresponding source texts ('documents' column) to figure out if they are actual duplicates.
 
   * to compare the source texts for similarity ROUGE-2 recall is used
 
