@@ -18,20 +18,37 @@ def get_parser():
     # parser.add_argument("--path", type=str, default = "data/APTNER_processed/", help="Directory of the data")
     parser.add_argument("--data_dir", type=str, default = "data", help="Directory of the data")
     parser.add_argument("--dataset_dir", type=str, default = "webis_tldr_mini", help="Directory of the dataset")
-    parser.add_argument("--dataset_filepath", type=str, default = "webis_tldr_mini_train", help="Filepath for the train split of the dataset")
+    parser.add_argument("--train_dataset_dir", type=str, default = "webis_tldr_mini_train", help="Directory for the train split of the dataset")
+    parser.add_argument("--val_dataset_dir", type=str, default = "webis_tldr_mini_val", help="Directory for the validation split of the dataset")
     parser.add_argument("--checkpoint", type=str, default = "microsoft/prophetnet-large-uncased", help="Hugging Face model checkpoint")
     parser.add_argument("--do_lower_case", type=bool, default=False, help="True if the model is uncased, should be defined according to checkpoint")
     parser.add_argument("--max_source_length", type=int, default=512, help="Maximal number of tokens per sequence. All sequences will be cut or padded to this length.")
     parser.add_argument("--max_target_length", type=int, default=128, help="Maximal number of tokens per sequence. All sequences will be cut or padded to this length.")
-    parser.add_argument("--pad_token", type=str, default="PAD", help="Token to pad sequences to maximal length")
     parser.add_argument("--batch_size", type=int, default=16, help="Batch size")
+    parser.add_argument("--max_grad_norm", type=float, default=1.0, help="Maximum gradient norm")
     parser.add_argument("--epochs", type=int, default=4, help="Number of epochs")
-    parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate")
+    parser.add_argument("--learning_rate", type=float, default=1e-6, help="Learning rate")
     parser.add_argument("--epsilon", type=float, default=1e-12, help="Epsilon")
     parser.add_argument("--wandb_project", type=str, default="Abstractive Summarization", help="Wandb project name")
     parser.add_argument("--wandb_entity", type=str, default="anna-kay", help="Wandb entity name")
     
     return parser
+
+def get_optimizer(model, learning_rate, epsilon):
+    
+    param_optimizer = list(model.named_parameters())
+    
+    no_decay = ['bias', 'gamma', 'beta']
+    optimizer_grouped_parameters = [
+        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
+         'weight_decay_rate': 0.01},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
+         'weight_decay_rate': 0.0}
+    ]
+    
+    optimizer = optim.Adam(optimizer_grouped_parameters, lr=learning_rate, eps=epsilon)
+    
+    return optimizer
 
 
 def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler, device, wandb):

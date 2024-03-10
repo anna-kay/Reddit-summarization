@@ -6,13 +6,13 @@ import torch.optim as optim
 from torch.utils.data import Dataset
 
 import pyarrow.parquet as pq
-# from dataset import load_dataset
+from datasets import load_from_disk
 
 class SummarizationDataset(Dataset):
 
     def __init__(self, file_path, tokenizer, max_source_length, max_target_length):
 
-        self.dataset = pq.read_table(file_path)
+        self.dataset = load_from_disk(file_path)
         self.tokenizer = tokenizer
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
@@ -22,7 +22,7 @@ class SummarizationDataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        item = self.dataset[idx].as_py()
+        item = self.dataset[idx]
 
         source_text = item["content"]
         target_text = item["summary"]
@@ -31,7 +31,7 @@ class SummarizationDataset(Dataset):
         source_encoding = self.tokenizer(
             source_text,
             max_length=self.max_source_length,
-            padding="max_length",
+            padding=True, #"max_length", # replace with padding=True
             truncation=True,
             return_tensors="pt",
             return_attention_mask=True,
@@ -40,7 +40,7 @@ class SummarizationDataset(Dataset):
         target_encoding = self.tokenizer(
             target_text,
             max_length=self.max_target_length,
-            padding="max_length",
+            padding=True, #"max_length", # replace with padding=True
             truncation=True,
             return_tensors="pt",
         )

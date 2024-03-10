@@ -1,49 +1,55 @@
 # Standard library imports
+import logging
 import os
 import random
 
 # Third-party library imports
 import wandb
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 from transformers import ProphetNetTokenizer, ProphetNetForConditionalGeneration
-
 from transformers import get_linear_schedule_with_warmup
 
 # Project-specific imports
-from dataset import SummarizationDataset 
-from utils import get_parser, get_optimizer, train_epoch, print_epoch_scores, \
-                    get_final_average_scores, evaluate_epoch, save_best_model, \
-                    plot_train_val_losses
+from dataset import SummarizationDataset
+from utils.utils import get_parser, get_optimizer, train_epoch, evaluate_epoch, print_epoch_scores
+                    
+# # Configure logging
+# logging.basicConfig(
+#     level=logging.DEBUG,  # Set the logging level to DEBUG to log all messages
+#     format='%(asctime)s - %(levelname)s - %(message)s',  # Define the format of log messages
+#     filename='train.log'  # Specify the file where log messages will be written
+# )
 
 
 def main():
 
-    dnrti_arguments = ["--data_dir", "data", 
-                        "--dataset_dir", "webis_tldr_mini",
-                        "--train_dataset_dir", "webis_tldr_mini_train",
-                        "--val_dataset_dir", "webis_tldr_mini_val",
-                        "--checkpoint", "microsoft/prophetnet-large-uncased",
-                        "--do_lower_case", "False",
-                        "--max_source_length", "512",
-                        "--max_target_length", "142",
-                        "--batch_size", "2", 
-                        "--max_grad_norm", "1.0",
-                        "--epochs", "2",
-                        "--learning_rate", "1e-4",
-                        "--wandb_project", "Abstractive Summarization",
-                        "--wandb_entity", "anna-kay"
-                        ]
+    os.environ['WANDB_DISABLED'] = 'true'
+
+    webis_tldr_arguments = ["--data_dir", "data", 
+                            "--dataset_dir", "webis_tldr_mini",
+                            "--train_dataset_dir", "webis_tldr_mini_train",
+                            "--val_dataset_dir", "webis_tldr_mini_val",
+                            "--checkpoint", "microsoft/prophetnet-large-uncased",
+                            "--do_lower_case", "False",
+                            "--max_source_length", "512",
+                            "--max_target_length", "142",
+                            "--batch_size", "2", 
+                            "--max_grad_norm", "1.0",
+                            "--epochs", "2",
+                            "--learning_rate", "1e-4",
+                            "--wandb_project", "Abstractive Summarization",
+                            "--wandb_entity", "anna-kay"
+                            ]
     
     parser = get_parser()
-    args = parser.parse_args(dnrti_arguments)
+
+    args = parser.parse_args(webis_tldr_arguments)
     
     # Sequence (sentence) padding parameters
     max_source_length = args.max_source_length
     max_target_length = args.max_target_length
-
-    label_pad_token = args.pad_token
     
     # Training parameters
     batch_size = args.batch_size
@@ -61,8 +67,8 @@ def main():
     wandb_entity = args.wandb_entity
 
     # Construct path to the dataset that will be used    
-    train_data_path = os.path.join(args.data, args.dataset_dir , args.train_dataset_dir)
-    val_data_path = os.path.join(args.data, args.dataset_dir , args.val_dataset_dir)
+    train_data_path = os.path.join(args.data_dir, args.dataset_dir , args.train_dataset_dir)
+    val_data_path = os.path.join(args.data_dir, args.dataset_dir , args.val_dataset_dir)
     
     # Initialize WandB run
     wandb.init(project=wandb_project, 
@@ -83,6 +89,17 @@ def main():
                                          max_source_length,
                                          max_target_length)
     
+    print(train_dataset)
+
+    print(train_dataset[5])
+
+    # Assuming 'dataset' is your original dataset
+    subset_indices = list(range(2800))  # Indices of the samples you want to include in the subset
+    my_subset = Subset(train_dataset, subset_indices)
+
+    print(my_subset[5])
+
+
     train_loader = DataLoader(train_dataset, 
                               batch_size=batch_size, 
                               shuffle=True)
