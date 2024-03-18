@@ -5,11 +5,16 @@ from collections import Counter
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
-from sklearn.preprocessing import LabelEncoder
+
+from evaluate import load
+from nltk.tokenize import sent_tokenize
+
 
 import torch
 import torch.optim as optim
+
+from tqdm import tqdm
+
 
 def get_parser():
     
@@ -56,14 +61,16 @@ def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler,
     model.train()
     train_loss = 0
 
-    for batch in train_loader:
+    for batch in tqdm(train_loader, desc=f"{epoch+1}"):
         input_ids = batch["input_ids"].to(device).long()
         attention_mask = batch["attention_mask"].to(device).long()
         labels = batch["labels"].to(device).long()
 
+        # Zero gradients
         optimizer.zero_grad()
+
         outputs = model(input_ids=input_ids,
-                        token_type_ids=None,
+                        # token_type_ids=None,
                         attention_mask=attention_mask,
                         labels=labels)
 
@@ -72,10 +79,11 @@ def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler,
         train_loss += loss.item()
 
         torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=max_grad_norm)
+
         optimizer.step()
         scheduler.step()
-        
-    # Calculate ang log average training loss and learning rate for the epoch
+
+    # Calculate and log average training loss and learning rate for the epoch
     avg_train_loss = train_loss / len(train_loader)
     current_lr = scheduler.get_last_lr()[0]
     
@@ -85,6 +93,43 @@ def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler,
     return avg_train_loss, current_lr
 
 
+def train_epoch_manually_compute_grads(model, epoch, train_loader, max_grad_norm, learning_rate, device, wandb):
+    
+    model.train()
+    train_loss = 0
+
+    for batch in tqdm(train_loader, desc=f"{epoch+1}"):
+        input_ids = batch["input_ids"].to(device).long()
+        attention_mask = batch["attention_mask"].to(device).long()
+        labels = batch["labels"].to(device).long()
+
+        # Zero gradients
+        model.zero_grad()
+
+        outputs = model(input_ids=input_ids,
+                        attention_mask=attention_mask,
+                        labels=labels)
+
+        loss = outputs.loss
+        loss.backward()
+        train_loss += loss.item()
+
+        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=max_grad_norm)
+        
+        # Manually update model parameters
+        with torch.no_grad():
+            for param in model.parameters():
+                param -= learning_rate * param.grad 
+
+    # Calculate and log average training loss and learning rate for the epoch
+    avg_train_loss = train_loss / len(train_loader)
+    
+    wandb.log({"epoch": epoch+1, "train_loss": avg_train_loss})
+    # wandb.log({"epoch": epoch+1, "learning_rate": current_lr})
+    
+    return avg_train_loss
+
+
 def evaluate_epoch(model, epoch, val_loader, device, wandb):
    
     model.eval()
@@ -92,7 +137,7 @@ def evaluate_epoch(model, epoch, val_loader, device, wandb):
     predictions, true_labels = [], []
 
     with torch.no_grad():
-        for batch in val_loader:
+        for batch in tqdm(val_loader, desc=f"{epoch+1}"):
             input_ids = batch["input_ids"]
             attention_mask = batch["attention_mask"]
             labels = batch["labels"]
@@ -102,7 +147,7 @@ def evaluate_epoch(model, epoch, val_loader, device, wandb):
             labels = labels.to(device).long()
 
             outputs = model(input_ids=input_ids,
-                            token_type_ids=None,
+                            # token_type_ids=None,
                             attention_mask=attention_mask,
                             labels=labels)
 
@@ -112,10 +157,14 @@ def evaluate_epoch(model, epoch, val_loader, device, wandb):
 
             val_loss += outputs.loss.item() # outputs.loss.mean().item()
 
-            predictions.extend([list(p) for p in np.argmax(logits, axis=2)])
-            true_labels.extend(label_ids)
+            # Compute predicted labels from logits
+            # predictions = torch.argmax(outputs.logits, dim=-1)
 
-            true_labels = [[int(val) for val in sublist] for sublist in true_labels]
+            # TODO: check if this applies for the task of summarization -> PROBABLY NOT!
+            predictions.extend([list(p) for p in np.argmax(logits, axis=2)])
+            true_labels.extend(label_ids)            
+
+            # true_labels = [[int(val) for val in sublist] for sublist in true_labels]
             
             # TODO: clarify that this is *batch* val loss?
             # wandb.log({"epoch": epoch+1, "batch_val_loss": val_loss})
@@ -126,20 +175,39 @@ def evaluate_epoch(model, epoch, val_loader, device, wandb):
     return avg_val_loss, predictions, true_labels
 
 
-def print_epoch_scores(valid_tags, pred_tags, labels):
+def compute_metrics(predictions, labels, tokenizer):
 
-    # TODO: change code, add ROUGE scores
+    rouge_score = load("rouge")
     
-    F1_SCORE = f1_score(valid_tags, pred_tags, average = None, labels=labels)
-    PRECISION = precision_score(valid_tags,pred_tags, average = None, labels=labels)
-    RECALL = recall_score(valid_tags,pred_tags, average = None, labels=labels)
+    # Decode generated summaries into text
+    decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+    # Replace -100 in the labels as we can't decode them
+    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    # Decode reference summaries into text
+    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+    # ROUGE expects a newline after each sentence
+    decoded_preds = ["\n".join(sent_tokenize(pred.strip())) for pred in decoded_preds]
+    decoded_labels = ["\n".join(sent_tokenize(label.strip())) for label in decoded_labels]
+    # Compute ROUGE scores
+    result = rouge_score.compute(
+        predictions=decoded_preds, references=decoded_labels, use_stemmer=True
+    )
+    # Extract the median scores
+    result = {key: value * 100 for key, value in result.items()}
+    return {k: round(v, 4) for k, v in result.items()}
 
-    print("\nLabel\t\t F1-Score Precision Recall")
-    for i in range(len(labels)):
-        print("{0:15}\t {1}\t {2}\t {3}".format(labels[i], \
-                                                round(F1_SCORE[i],2), \
-                                                round(PRECISION[i],2), \
-                                                round(RECALL[i],2)))
 
-    return 0  
-
+def plot_train_val_losses(train_loss_values, val_loss_values, epochs):
+    
+    x = range(1, epochs+1)
+    
+    plt.title("Training & Validation Losses")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    
+    plt.xticks(x)
+    plt.plot(x, train_loss_values, marker='o', label='train loss')
+    plt.plot(x, val_loss_values, marker='o', label='valid loss')
+    plt.legend()
+    plt.grid(linestyle = '--')
+    plt.show()
