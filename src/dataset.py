@@ -31,7 +31,7 @@ class SummarizationDataset(Dataset):
         source_encoding = self.tokenizer(
             source_text,
             max_length=self.max_source_length,
-            padding=True, #"max_length", # replace with padding=True
+            padding="max_length", # replace with padding=True
             truncation=True,
             return_tensors="pt",
             return_attention_mask=True,
@@ -40,7 +40,7 @@ class SummarizationDataset(Dataset):
         target_encoding = self.tokenizer(
             target_text,
             max_length=self.max_target_length,
-            padding=True, #"max_length", # replace with padding=True
+            padding="max_length", # replace with padding=True
             truncation=True,
             return_tensors="pt",
         )
