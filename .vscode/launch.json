@@ -1,0 +1,39 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Train Reddit Summarization",
+            "type": "debugpy",
+            "request": "launch",
+            "program": FIXME, // add path to python file for training, .../src/train.py or .../src/train_without_optimizer.py
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--data_dir", "data", 
+                "--train_dataset_dir", "webis_tldr_mini_train",
+                "--val_dataset_dir", "webis_tldr_mini_val",
+                "--checkpoint", FIXME, // add model checkpoint, e.g. "microsoft/prophetnet-large-uncased" 
+                "--do_lower_case", "False",
+                "--max_source_length", "512", TODO: change according to selected model
+                "--max_target_length", "142", TODO: change according to selected model
+                "--batch_size", "16", 
+                "--max_grad_norm", "1.0", 
+                "--epochs", "6", 
+                "--learning_rate", "5e-6", 
+                "--wandb_project", FIXME, // add desired project name in wandb (if not existing yet, the project will be created) 
+                "--wandb_entity", FIXME, // your wandb username
+                ]
+
+        }
+    ]
+} 
