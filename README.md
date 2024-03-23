@@ -1,6 +1,6 @@
 ## Overview
 This project revolves around the task of Abstractive Summarization, a Natural Language Processing (NLP) task.
-Transformer-based models (deep learning) are used for the summarization of informal, noisy texts. The texts datasets come from Reddit. 
+Transformer-based models (deep learning) are used for the summarization of informal, noisy texts. The texts come from Reddit. 
 
 All models checkpoints and datasets use in the project are downloaded from Hugging Face 🤗.
 
