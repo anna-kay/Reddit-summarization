@@ -1,6 +1,6 @@
 ## Project Structure 
 ___
--
+```
 | - .vscode/
 | - - launch.json
 | - notebooks/
@@ -11,3 +11,4 @@ ___
 | - - train.py
 | - - train_without_optimizer.py
 | - - utils/
+```
