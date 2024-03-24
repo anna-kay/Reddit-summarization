@@ -6,7 +6,7 @@ All models checkpoints and datasets use in the project are downloaded from Huggi
 
 ## Models
 1. **BART**, https://arxiv.org/abs/1910.13461 (paper)
-2. **PEAGSUS**, http://proceedings.mlr.press/v119/zhang20ae (paper), https://github.com/google-research/pegasus (github)
+2. **PEGASUS**, http://proceedings.mlr.press/v119/zhang20ae (paper), https://github.com/google-research/pegasus (github)
 3. **ProphetNet**, https://arxiv.org/abs/2001.04063 (paper), https://github.com/microsoft/ProphetNet/tree/master/ProphetNet (github)
 
 ## Data
