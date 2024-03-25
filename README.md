@@ -2,12 +2,12 @@
 This project revolves around the task of Abstractive Summarization, a Natural Language Processing (NLP) task.
 Transformer-based models (deep learning) are used for the summarization of informal, noisy texts. The texts come from Reddit. 
 
-All models checkpoints and datasets use in the project are downloaded from Hugging Face 🤗.
+The repo contains:
+- Exploratory Data Analysis of the Reddit datasets
+- Replication of the results of the papers that introduce the Transformer-based models for Abstractive Summarization.
+- Fine-tuning of the Transformer-based models on the Reddit datasets.
 
-## Models
-1. **BART**, https://arxiv.org/abs/1910.13461 (paper)
-2. **PEGASUS**, http://proceedings.mlr.press/v119/zhang20ae (paper), https://github.com/google-research/pegasus (github)
-3. **ProphetNet**, https://arxiv.org/abs/2001.04063 (paper), https://github.com/microsoft/ProphetNet/tree/master/ProphetNet (github)
+All datasets and models checkpoints used in the project are downloaded from Hugging Face 🤗.
 
 ## Data
 
@@ -29,6 +29,20 @@ As one can observe from the columns 'Subreddit' and 'Time Span', there is a pote
 2. **Both datasets contain duplicates:** <br>
 **Webis-TLDR-17** contains 40,407 items that are exact duplicates of another item (30,966 non unique values), in terms of source text (‘content’ field), see <a href="https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/Webis-TLDR-17_filtering.ipynb">Webis-TLDR-17 filtering</a>.<br>
 **Reddit TIFU** contains 38 items that are exact duplicates of another item (24 non unique values), in terms of source text ('documents' field) and 56 almost duplicates, see <a href="https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/Reddit-TIFU_filtering.ipynb">Reddit TIFU filtering</a>. It is worth noting that we detected an item that appears 25 times Reddit TIFU (25 exact or almost duplicates and one original, e.g. in positions 8200, 8207 and 8208 (indexes) of the dataset).
+3. **No official train-val-test splits for either dataset**<br>
+No official train-val-test splits were found in the papers introducing or performing experiments on the datasets. Hugging Face Datasets also does not provide any splits. The entirety of both datasets was using the 'split='train' argument, like this:
+```
+webis_tldr = load_dataset('reddit', split='train')
+reddit_tifu = load_dataset('reddit_tifu', 'long', split='train')
+```
+4. **Both datasets are noisy**
+
+
+## Models
+1. **BART**, https://arxiv.org/abs/1910.13461 (paper)
+2. **PEGASUS**, http://proceedings.mlr.press/v119/zhang20ae (paper), https://github.com/google-research/pegasus (github)
+3. **ProphetNet**, https://arxiv.org/abs/2001.04063 (paper), https://github.com/microsoft/ProphetNet/tree/master/ProphetNet (github)
+
 
 
 
