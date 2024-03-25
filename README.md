@@ -25,8 +25,7 @@ All models checkpoints and datasets use in the project are downloaded from Huggi
 **Issues with the data:**
 
 1. Overlap between Webis-TLDR-17 and Reddit TIFU <br><br>
-As one can observe from the columns 'Subreddit' and 'Time Span', there is a potential for overlap between the two datasets, as both include data from the subreddit 'r/tifu' spanning from 2013 to 2016. This project investigates and confirms the presence of this overlap. 
-The two datasets share approxiamtely 5,700 common items (exact matches), which constitues 13.5% of Reddit TIFU, 10.9% of “r/tifu” items of Webis-TLDR-17, and 0.15% of the total of Webis-TLDR-17. - [overlap examination](https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/overlap_examination_Webis-TLDR-17_Reddit-TIFU_no_prior_filtering.ipynb)
+As one can observe from the columns 'Subreddit' and 'Time Span', there is a potential for overlap between the two datasets, as both include data from the subreddit 'r/tifu' spanning from 2013 to 2016. More specifically, Webis-TLDR-17 includes 52,219 items belonging to the "r/tifu" subreddit. This project investigates and confirms the presence of this overlap. The two datasets share approxiamtely 5,700 common items (exact matches), which constitue 13.5% of Reddit TIFU, 10.9% of “r/tifu” items of Webis-TLDR-17, and 0.15% of the total of Webis-TLDR-17. - [overlap examination](https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/overlap_examination_Webis-TLDR-17_Reddit-TIFU_no_prior_filtering.ipynb)
 
 
 ## Project Structure 
