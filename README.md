@@ -24,12 +24,11 @@ All models checkpoints and datasets use in the project are downloaded from Huggi
 
 **Issues with the data:**
 
-1. Overlap between Webis-TLDR-17 and Reddit TIFU <br><br>
+1. **Overlap between Webis-TLDR-17 and Reddit TIFU:** <br>
 As one can observe from the columns 'Subreddit' and 'Time Span', there is a potential for overlap between the two datasets, as both include data from the subreddit 'r/tifu' spanning from 2013 to 2016. More specifically, Webis-TLDR-17 includes 52,219 items belonging to the "r/tifu" subreddit. This project investigates and confirms the presence of this overlap. The two datasets share approxiamtely 5,700 common items (exact matches), which constitue 13.5% of Reddit TIFU, 10.9% of “r/tifu” items of Webis-TLDR-17, and 0.15% of the total of Webis-TLDR-17. - [overlap examination](https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/overlap_examination_Webis-TLDR-17_Reddit-TIFU_no_prior_filtering.ipynb)
-<br>
-2. Both datasets contain duplicates. <br><br>
-Webis-TLDR-17 contains approximately 31,000 non unique items (in terms of source text, ‘content’ field).<br><br>
-Reddit TIFU contains 38 exact duplicates ('documents' field) and 56 almost duplicates [Reddit TIFU deduplication](https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/Reddit-TIFU_filtering.ipynb). It is worth noting that we detected an item that appears 25 times Reddit TIFU (25 exact or almost duplicates and one original, e.g. in positions 8200, 8207 and 8208 (indexes) of the dataset).
+2. **Both datasets contain duplicates:** <br>
+**Webis-TLDR-17** contains approximately 40,407 non unique items (in terms of source text, ‘content’ field), see <a href="https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/Webis-TLDR-17_filtering.ipynb">Webis-TLDR-17 filtering</a>.<br>
+**Reddit TIFU** contains 38 exact duplicates ('documents' field) and 56 almost duplicates, see <a href="https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/Reddit-TIFU_filtering.ipynb">Reddit TIFU filtering</a>. It is worth noting that we detected an item that appears 25 times Reddit TIFU (25 exact or almost duplicates and one original, e.g. in positions 8200, 8207 and 8208 (indexes) of the dataset).
 
 
 
