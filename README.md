@@ -4,8 +4,9 @@ Transformer-based models (deep learning) are used for the summarization of infor
 
 The repo contains:
 - Exploratory Data Analysis of the Reddit datasets
-- Replication of the results of the papers that introduce the Transformer-based models for Abstractive Summarization.
-- Fine-tuning of the Transformer-based models on the Reddit datasets.
+- Filtering of noise from the Reddit datasets
+- Replication of the results of the papers that introduce the Transformer-based models for Abstractive Summarization
+- Fine-tuning of the Transformer-based models on the Reddit datasets
 
 All datasets and models checkpoints used in the project are downloaded from Hugging Face 🤗.
 
