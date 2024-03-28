@@ -65,3 +65,7 @@ These issues render these data points actually not suitable for training summari
 | - - train_without_optimizer.py
 | - - utils/
 ```
+
+* `.vscode` directory is only useful if the code is run in Visual Studio Code.
+*  `notebooks` contains the .ipynb files for the Exploratory Data Analysis, the filtering of the Reddit datasets, and the replication of the results of Abstractive Summarization for the BART, PEGASUS, and ProphetNet papers
+*  `src` contains the PyTorch code for the fine-tuning of the Transformer-based models on the Reddit datasets
