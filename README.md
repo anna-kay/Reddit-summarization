@@ -30,7 +30,7 @@ As one can observe from the columns 'Subreddit' and 'Time Span', there is a pote
 2. **Both datasets contain duplicates:** <br>
 **Webis-TLDR-17** contains 40,407 items that are exact duplicates of another item (30,966 non unique values), in terms of source text (‘content’ field), see <a href="https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/Webis-TLDR-17_filtering.ipynb">Webis-TLDR-17 filtering</a>.<br>
 **Reddit TIFU** contains 38 items that are exact duplicates of another item (24 non unique values), in terms of source text ('documents' field) and 56 almost duplicates, see <a href="https://github.com/anna-kay/Reddit-summarization/blob/main/notebooks/filtering/Reddit-TIFU_filtering.ipynb">Reddit TIFU filtering</a>. It is worth noting that we detected an item that appears 25 times Reddit TIFU (25 exact or almost duplicates and one original, e.g. in positions 8200, 8207 and 8208 (indexes) of the dataset).
-3. **No official train-val-test splits for either dataset**<br>
+3. **No official train-val-test splits for either dataset:**<br>
 No official train-val-test splits were found in the papers introducing or performing experiments on the datasets. Hugging Face Datasets also does not provide any splits. The entirety of both datasets was using the 'split='train' argument, like this:
 ```
 webis_tldr = load_dataset('reddit', split='train')
@@ -40,7 +40,7 @@ reddit_tifu = load_dataset('reddit_tifu', 'long', split='train')
 As Reddit is an open platform, data quality issues are expected. In the scope of the summarization task specifically, the most revelant issues are:
   - very short summaries not proportionate to the source text,
   - users not providing a summary in the summary field but instead posting a short message prompting to read the whole source text or the title, or providing a conlusion or a general truth, or posing a question.<br>
-These issues render these data points actually not suitable for training summarization models due to its lack of coherence with summarization principles.
+These issues render these data points actually not suitable for training summarization models due to their lack of coherence with summarization principles.
 
 
 ## Models
