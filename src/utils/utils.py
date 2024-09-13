@@ -3,15 +3,18 @@ import json
 import os
 from collections import Counter
 
+import torch
+import torch.optim as optim
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-from evaluate import load
+import nltk
+nltk.download('punkt')
+nltk.download('punkt_tab')
+
 from nltk.tokenize import sent_tokenize
-
-
-import torch
-import torch.optim as optim
+from evaluate import load
 
 from tqdm import tqdm
 
@@ -51,12 +54,12 @@ def get_optimizer(model, learning_rate, epsilon):
          'weight_decay_rate': 0.0}
     ]
     
-    optimizer = optim.Adam(optimizer_grouped_parameters, lr=learning_rate, eps=epsilon)
+    optimizer = optim.AdamW(optimizer_grouped_parameters, lr=learning_rate, eps=epsilon)
     
     return optimizer
 
 
-def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler, device, wandb):
+def train_epoch(model, epoch, train_loader, optimizer, scheduler, device, wandb): # max_grad_norm,
     
     model.train()
     train_loss = 0
@@ -78,7 +81,7 @@ def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler,
         loss.backward()
         train_loss += loss.item()
 
-        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=max_grad_norm)
+        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=1.0)
 
         optimizer.step()
         scheduler.step()
@@ -93,7 +96,7 @@ def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler,
     return avg_train_loss, current_lr
 
 
-def train_epoch_manually_compute_grads(model, epoch, train_loader, max_grad_norm, learning_rate, device, wandb):
+def train_epoch_manually_compute_grads(model, epoch, train_loader, learning_rate, device, wandb): # max_grad_norm,
     
     model.train()
     train_loss = 0
@@ -114,7 +117,7 @@ def train_epoch_manually_compute_grads(model, epoch, train_loader, max_grad_norm
         loss.backward()
         train_loss += loss.item()
 
-        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=max_grad_norm)
+        torch.nn.utils.clip_grad_norm_(parameters=model.parameters()) #, max_norm=max_grad_norm)
         
         # Manually update model parameters
         with torch.no_grad():

@@ -8,13 +8,21 @@ import wandb
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from transformers import ProphetNetTokenizer, ProphetNetForConditionalGeneration
+from transformers import (
+    ProphetNetTokenizer, 
+    ProphetNetForConditionalGeneration, 
+    BartTokenizer, 
+    BartForConditionalGeneration, 
+    PegasusTokenizer, 
+    PegasusForConditionalGeneration
+)
+
 from transformers import get_linear_schedule_with_warmup
 
 # Project-specific imports
 from dataset import SummarizationDataset
-from utils.utils import get_parser, get_optimizer, train_epoch, evaluate_epoch, print_epoch_scores
-                    
+from utils.utils import get_parser, get_optimizer, plot_train_val_losses, train_epoch, evaluate_epoch, compute_metrics
+
 # # Configure logging
 # logging.basicConfig(
 #     level=logging.DEBUG,  # Set the logging level to DEBUG to log all messages
@@ -37,7 +45,7 @@ def main():
                             "--max_target_length", "142",
                             "--batch_size", "2", 
                             "--max_grad_norm", "1.0",
-                            "--epochs", "2",
+                            "--epochs", "5",
                             "--learning_rate", "1e-4",
                             "--wandb_project", "Abstractive Summarization",
                             "--wandb_entity", "anna-kay"
@@ -89,18 +97,17 @@ def main():
                                          max_source_length,
                                          max_target_length)
     
-    print(train_dataset)
+    # print(train_dataset)
 
-    print(train_dataset[5])
+    # print(train_dataset[5])
 
     # Assuming 'dataset' is your original dataset
-    subset_indices = list(range(2800))  # Indices of the samples you want to include in the subset
-    my_subset = Subset(train_dataset, subset_indices)
+    subset_indices = list(range(40))  # Indices of the samples you want to include in the subset
+    my_train_subset = Subset(train_dataset, subset_indices)
 
-    print(my_subset[5])
+    # print(my_subset[5])
 
-
-    train_loader = DataLoader(train_dataset, 
+    train_loader = DataLoader(my_train_subset, #train_dataset, 
                               batch_size=batch_size, 
                               shuffle=True)
     
@@ -109,11 +116,15 @@ def main():
                                        max_source_length,
                                        max_target_length)
     
-    val_loader = DataLoader(val_dataset, 
+
+    subset_indices = list(range(10))  # Indices of the samples you want to include in the subset
+    my_val_subset = Subset(val_dataset, subset_indices)
+    
+    val_loader = DataLoader(my_val_subset, 
                             batch_size=batch_size)
        
     # Load the model
-    model = ProphetNetForConditionalGeneration.from_pretrained(checkpoint)
+    model = ProphetNetForConditionalGeneration.from_pretrained(checkpoint) # TODO: if not enough VRAM -> gradient_checkpointing=True
     
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -153,7 +164,7 @@ def main():
                                                  epoch, 
                                                  train_loader, 
                                                  optimizer, 
-                                                 max_grad_norm, 
+                                                 # max_grad_norm, 
                                                  scheduler, 
                                                  device, 
                                                  wandb)
@@ -173,10 +184,13 @@ def main():
         
         print(f"Average val loss: {avg_val_loss: .3f}")
             
-
         
         # Print out scores for the epoch
-        print_epoch_scores(labels, predictions)          
+        # print_epoch_scores(labels, predictions)    
+        # 
+        rouge_metrics = compute_metrics(predictions, labels, tokenizer)
+        
+        print(f"Rouge Metrics: {rouge_metrics}")     
         
         # TODO: add relevant (total) metrics
         # TODO: add wandb.logs
@@ -187,27 +201,32 @@ def main():
             # Update the best metrics
             best_val_loss = avg_val_loss
             # TODO: modify 
-            best_micro_avgs = micro_avgs 
-            best_macro_avgs = macro_avgs
+            # best_micro_avgs = micro_avgs 
+            # best_macro_avgs = macro_avgs
             
             # Store the best (according to val loss) model checkpoint & scores
-            save_best_model(model,
-                            # TODO: modify
-                            micro_avgs,
-                            macro_avgs,
-                            "early_stopping_model", 
-                            epoch_count)
+            # save_best_model(model,
+            #                 # TODO: modify
+            #                 micro_avgs,
+            #                 macro_avgs,
+            #                 "early_stopping_model", 
+            #                 epoch_count)
+            
+            
+            
+            
+
     
     # Plots the tarining and validation losses of all the epochs
     plot_train_val_losses(train_loss_values, val_loss_values, epochs)          
     
     # Save the last model checkpoint & scores
-    save_best_model(model,
-                     # TODO: modify
-                    micro_avgs, 
-                    macro_avgs,
-                    "last_epoch_model",
-                    epoch_count)
+    # save_best_model(model,
+    #                  # TODO: modify
+    #                 micro_avgs, 
+    #                 macro_avgs,
+    #                 "last_epoch_model",
+    #                 epoch_count)
     
     # Log the final learning rates, log model artifacts & finish the WandB run
     # wandb.log({"learning_rates_": learning_rates})
