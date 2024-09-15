@@ -45,9 +45,16 @@ class SummarizationDataset(Dataset):
             return_tensors="pt",
         )
 
+        input_ids = source_encoding.input_ids.squeeze(0)
+        attention_mask = source_encoding.attention_mask.squeeze(0)
+        labels = target_encoding.input_ids.squeeze(0)
+
+        # Replace padding token id with -100 for labels, to ignore them in loss computation
+        labels[labels == self.tokenizer.pad_token_id] = -100
+
         return {
-            "input_ids": source_encoding.input_ids.squeeze(0),
-            "attention_mask": source_encoding.attention_mask.squeeze(0),
-            "labels": target_encoding.input_ids.squeeze(0)
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "labels": labels
         }
         

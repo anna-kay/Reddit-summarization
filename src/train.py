@@ -23,13 +23,6 @@ from transformers import get_linear_schedule_with_warmup
 from dataset import SummarizationDataset
 from utils.utils import get_parser, get_optimizer, plot_train_val_losses, train_epoch, evaluate_epoch, compute_metrics
 
-# # Configure logging
-# logging.basicConfig(
-#     level=logging.DEBUG,  # Set the logging level to DEBUG to log all messages
-#     format='%(asctime)s - %(levelname)s - %(message)s',  # Define the format of log messages
-#     filename='train.log'  # Specify the file where log messages will be written
-# )
-
 
 def main():
 
@@ -96,16 +89,10 @@ def main():
                                          tokenizer, 
                                          max_source_length,
                                          max_target_length)
-    
-    # print(train_dataset)
-
-    # print(train_dataset[5])
 
     # Assuming 'dataset' is your original dataset
     subset_indices = list(range(40))  # Indices of the samples you want to include in the subset
     my_train_subset = Subset(train_dataset, subset_indices)
-
-    # print(my_subset[5])
 
     train_loader = DataLoader(my_train_subset, #train_dataset, 
                               batch_size=batch_size, 
@@ -176,20 +163,17 @@ def main():
     
         # ------------------------ VALIDATION PART ------------------------#
         avg_val_loss, predictions, labels = evaluate_epoch(model, 
-                                                                epoch, 
-                                                                val_loader, 
-                                                                device, 
-                                                                wandb)
+                                                            epoch, 
+                                                            val_loader, 
+                                                            device, 
+                                                            wandb)
         val_loss_values.append(avg_val_loss)
         
         print(f"Average val loss: {avg_val_loss: .3f}")
             
         
-        # Print out scores for the epoch
-        # print_epoch_scores(labels, predictions)    
-        # 
+        # Print out ROUGE scores for the epoch    
         rouge_metrics = compute_metrics(predictions, labels, tokenizer)
-        
         print(f"Rouge Metrics: {rouge_metrics}")     
         
         # TODO: add relevant (total) metrics

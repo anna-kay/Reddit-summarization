@@ -133,21 +133,16 @@ def train_epoch_manually_compute_grads(model, epoch, train_loader, learning_rate
     return avg_train_loss
 
 
-def evaluate_epoch(model, epoch, val_loader, device, wandb):
-   
+def evaluate_epoch(model, epoch, val_loader, device, wandb): 
     model.eval()
     val_loss = 0
     predictions, true_labels = [], []
 
     with torch.no_grad():
-        for batch in tqdm(val_loader, desc=f"{epoch+1}"):
-            input_ids = batch["input_ids"]
-            attention_mask = batch["attention_mask"]
-            labels = batch["labels"]
-
-            input_ids = input_ids.to(device).long()
-            attention_mask = attention_mask.to(device).long()
-            labels = labels.to(device).long()
+        for batch in tqdm(val_loader, desc=f"Epoch {epoch+1}"):
+            input_ids = batch["input_ids"].to(device).long()
+            attention_mask = batch["attention_mask"].to(device).long()
+            labels = batch["labels"].to(device).long()
 
             outputs = model(input_ids=input_ids,
                             # token_type_ids=None,
@@ -156,18 +151,15 @@ def evaluate_epoch(model, epoch, val_loader, device, wandb):
 
             logits = outputs.logits.to('cpu').numpy()   # logits = outputs.logits.detach().cpu().numpy()
                                                     # .detach() is redundant
+            # TODO: Ensure that your model’s logits are in the shape (batch_size, sequence_length, vocab_size).
             label_ids = labels.to('cpu').numpy()
 
             val_loss += outputs.loss.item() # outputs.loss.mean().item()
 
             # Compute predicted labels from logits
-            # predictions = torch.argmax(outputs.logits, dim=-1)
-
-            # TODO: check if this applies for the task of summarization -> PROBABLY NOT!
-            predictions.extend([list(p) for p in np.argmax(logits, axis=2)])
-            true_labels.extend(label_ids)            
-
-            # true_labels = [[int(val) for val in sublist] for sublist in true_labels]
+            batch_predictions = np.argmax(logits, axis=2)
+            predictions.extend(batch_predictions.tolist())
+            true_labels.extend(label_ids.tolist())
             
             # TODO: clarify that this is *batch* val loss?
             # wandb.log({"epoch": epoch+1, "batch_val_loss": val_loss})
