@@ -38,8 +38,8 @@ def main():
                             "--max_target_length", "142",
                             "--batch_size", "2", 
                             "--max_grad_norm", "1.0",
-                            "--epochs", "5",
-                            "--learning_rate", "1e-4",
+                            "--epochs", "3",
+                            "--learning_rate", "1e-6",
                             "--wandb_project", "Abstractive Summarization",
                             "--wandb_entity", "anna-kay"
                             ]
@@ -91,7 +91,7 @@ def main():
                                          max_target_length)
 
     # Assuming 'dataset' is your original dataset
-    subset_indices = list(range(40))  # Indices of the samples you want to include in the subset
+    subset_indices = list(range(80))  # Indices of the samples you want to include in the subset
     my_train_subset = Subset(train_dataset, subset_indices)
 
     train_loader = DataLoader(my_train_subset, #train_dataset, 
@@ -162,16 +162,17 @@ def main():
         print(f"Average train loss: {avg_train_loss: .3f}")  
     
         # ------------------------ VALIDATION PART ------------------------#
-        avg_val_loss, predictions, labels = evaluate_epoch(model, 
-                                                            epoch, 
-                                                            val_loader, 
-                                                            device, 
-                                                            wandb)
+        avg_val_loss, predictions, labels = evaluate_epoch(model,
+                                                           tokenizer, 
+                                                           epoch, 
+                                                           val_loader, 
+                                                           device,
+                                                           max_target_length, 
+                                                           wandb)
         val_loss_values.append(avg_val_loss)
         
         print(f"Average val loss: {avg_val_loss: .3f}")
             
-        
         # Print out ROUGE scores for the epoch    
         rouge_metrics = compute_metrics(predictions, labels, tokenizer)
         print(f"Rouge Metrics: {rouge_metrics}")     
@@ -196,6 +197,10 @@ def main():
             #                 "early_stopping_model", 
             #                 epoch_count)
             
+        # if current_rouge_score > best_rouge_score:
+        #     best_rouge_score = current_rouge_score
+        #     model.save_pretrained('best_model_rouge')
+
             
             
             

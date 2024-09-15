@@ -133,7 +133,7 @@ def train_epoch_manually_compute_grads(model, epoch, train_loader, learning_rate
     return avg_train_loss
 
 
-def evaluate_epoch(model, epoch, val_loader, device, wandb): 
+def evaluate_epoch(model, tokenizer, epoch, val_loader, device, max_target_length, wandb): 
     model.eval()
     val_loss = 0
     predictions, true_labels = [], []
@@ -156,10 +156,29 @@ def evaluate_epoch(model, epoch, val_loader, device, wandb):
 
             val_loss += outputs.loss.item() # outputs.loss.mean().item()
 
-            # Compute predicted labels from logits
-            batch_predictions = np.argmax(logits, axis=2)
-            predictions.extend(batch_predictions.tolist())
-            true_labels.extend(label_ids.tolist())
+            # Use model.generate() to generate predictions for summaries
+            generated_ids = model.generate(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                max_length=max_target_length,  # Set this according to your target max length
+                num_beams=4,  # Beam search size (set according to preference)
+                early_stopping=True  # Stops when the EOS token is reached
+            )
+
+            # Decode the generated sequences to text
+            decoded_preds = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
+            
+            label_ids = np.where(label_ids != -100, label_ids, tokenizer.pad_token_id)
+            decoded_labels = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
+
+            # Append to the list for ROUGE score calculation
+            predictions.extend(decoded_preds)
+            true_labels.extend(decoded_labels)
+
+            # # Compute predicted labels from logits
+            # batch_predictions = np.argmax(logits, axis=2)
+            # predictions.extend(batch_predictions.tolist())
+            # true_labels.extend(label_ids.tolist())
             
             # TODO: clarify that this is *batch* val loss?
             # wandb.log({"epoch": epoch+1, "batch_val_loss": val_loss})
@@ -174,19 +193,27 @@ def compute_metrics(predictions, labels, tokenizer):
 
     rouge_score = load("rouge")
     
-    # Decode generated summaries into text
-    decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
-    # Replace -100 in the labels as we can't decode them
-    labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
-    # Decode reference summaries into text
-    decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
-    # ROUGE expects a newline after each sentence
-    decoded_preds = ["\n".join(sent_tokenize(pred.strip())) for pred in decoded_preds]
-    decoded_labels = ["\n".join(sent_tokenize(label.strip())) for label in decoded_labels]
+    # # Decode generated summaries into text
+    # decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
+    # # Replace -100 in the labels as we can't decode them
+    # labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
+    # # Decode reference summaries into text
+    # decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+    # # ROUGE expects a newline after each sentence
+    # decoded_preds = ["\n".join(sent_tokenize(pred.strip())) for pred in decoded_preds]
+    # decoded_labels = ["\n".join(sent_tokenize(label.strip())) for label in decoded_labels]
+    # # Compute ROUGE scores
+    # result = rouge_score.compute(
+    #     predictions=decoded_preds, references=decoded_labels, use_stemmer=True
+    # )
+
+    decoded_preds = ["\n".join(sent_tokenize(pred.strip())) for pred in predictions]
+    decoded_labels = ["\n".join(sent_tokenize(label.strip())) for label in labels]
     # Compute ROUGE scores
     result = rouge_score.compute(
         predictions=decoded_preds, references=decoded_labels, use_stemmer=True
     )
+
     # Extract the median scores
     result = {key: value * 100 for key, value in result.items()}
     return {k: round(v, 4) for k, v in result.items()}
