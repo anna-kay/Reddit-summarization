@@ -21,7 +21,7 @@ from transformers import get_linear_schedule_with_warmup
 
 # Project-specific imports
 from dataset import SummarizationDataset
-from utils.utils import get_parser, get_optimizer, plot_train_val_losses, train_epoch, evaluate_epoch, compute_metrics
+from utils.utils import get_parser, get_optimizer, plot_train_val_losses, train_epoch, evaluate_epoch, compute_rouge_metrics, save_best_model
 
 
 def main():
@@ -40,6 +40,9 @@ def main():
                             "--max_grad_norm", "1.0",
                             "--epochs", "3",
                             "--learning_rate", "1e-6",
+                            "--epsilon", "1e-12",
+                            "--num_beams", "4",
+                            "--early_stopping", "True",
                             "--wandb_project", "Abstractive Summarization",
                             "--wandb_entity", "anna-kay"
                             ]
@@ -111,8 +114,10 @@ def main():
                             batch_size=batch_size)
        
     # Load the model
-    model = ProphetNetForConditionalGeneration.from_pretrained(checkpoint) # TODO: if not enough VRAM -> gradient_checkpointing=True
-    
+    model = ProphetNetForConditionalGeneration.from_pretrained(checkpoint) 
+    # Uncomment if not enough VRAM to enable gradient_checkpointing
+    # model.gradient_checkpointing_enable()
+
     if torch.cuda.is_available():
         device = torch.device("cuda")
         
@@ -134,8 +139,8 @@ def main():
     
     # Use in save_best_model to find & save the best model
     best_val_loss = float("inf")
-    best_micro_avgs, best_macro_avgs = None, None
-    
+    best_rouge_score = 0.0
+
     # List to store learning rates
     learning_rates = []
     
@@ -151,7 +156,7 @@ def main():
                                                  epoch, 
                                                  train_loader, 
                                                  optimizer, 
-                                                 # max_grad_norm, 
+                                                 max_grad_norm, 
                                                  scheduler, 
                                                  device, 
                                                  wandb)
@@ -174,54 +179,39 @@ def main():
         print(f"Average val loss: {avg_val_loss: .3f}")
             
         # Print out ROUGE scores for the epoch    
-        rouge_metrics = compute_metrics(predictions, labels, tokenizer)
+        rouge_metrics = compute_rouge_metrics(predictions, labels)
+        rouge_L_sum = rouge_metrics['rougeLsum']
+
         print(f"Rouge Metrics: {rouge_metrics}")     
-        
-        # TODO: add relevant (total) metrics
-        # TODO: add wandb.logs
+        wandb.log({"Rouge Metrics": rouge_metrics})
         
         # Check scores and store the best
-        if avg_val_loss < best_val_loss:
+        if avg_val_loss < best_val_loss:     
+            # Update the best validation loss
+            best_val_loss = avg_val_loss 
+            # Store the best (according to val loss) model checkpoint & info
+            save_best_model(model,
+                            epoch_count, 
+                            folder="best_avg_val_loss", 
+                            best_metric="avg_val_loss") # metric that is used to select best model
             
-            # Update the best metrics
-            best_val_loss = avg_val_loss
-            # TODO: modify 
-            # best_micro_avgs = micro_avgs 
-            # best_macro_avgs = macro_avgs
-            
-            # Store the best (according to val loss) model checkpoint & scores
-            # save_best_model(model,
-            #                 # TODO: modify
-            #                 micro_avgs,
-            #                 macro_avgs,
-            #                 "early_stopping_model", 
-            #                 epoch_count)
-            
-        # if current_rouge_score > best_rouge_score:
-        #     best_rouge_score = current_rouge_score
-        #     model.save_pretrained('best_model_rouge')
+        if rouge_L_sum > best_rouge_score:
+             # Update the best rouge score
+            best_rouge_scores = rouge_metrics
+            # Store the best (according to rouge_L_sum) model checkpoint & info
+            save_best_model(model,
+                            epoch_count, 
+                            folder="best_rouge_score", 
+                            best_metric="rouge_score") # metric that is used to select best model
 
             
-            
-            
-
-    
     # Plots the tarining and validation losses of all the epochs
     plot_train_val_losses(train_loss_values, val_loss_values, epochs)          
     
-    # Save the last model checkpoint & scores
-    # save_best_model(model,
-    #                  # TODO: modify
-    #                 micro_avgs, 
-    #                 macro_avgs,
-    #                 "last_epoch_model",
-    #                 epoch_count)
-    
     # Log the final learning rates, log model artifacts & finish the WandB run
-    # wandb.log({"learning_rates_": learning_rates})
-     # TODO: modify
-    wandb.log({"best_micro_avgs": best_micro_avgs, \
-               "best_macro_avgs": best_macro_avgs})
+    wandb.log({"learning_rates_": learning_rates})
+    wandb.log({"best_val_los": best_val_loss, \
+               "best_rouge_scores": best_rouge_scores})
     wandb.watch(model, log="all")
     wandb.finish()
     

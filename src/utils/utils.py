@@ -36,11 +36,14 @@ def get_parser():
     parser.add_argument("--max_grad_norm", type=float, default=1.0, help="Maximum gradient norm")
     parser.add_argument("--epochs", type=int, default=4, help="Number of epochs")
     parser.add_argument("--learning_rate", type=float, default=1e-6, help="Learning rate")
-    parser.add_argument("--epsilon", type=float, default=1e-12, help="Epsilon")
+    parser.add_argument("--epsilon", type=float, default="1e-12", help="Epsilon prevents division by zero.")
+    parser.add_argument("--num_beams", type=int, default=4, help="Decoding beam search size.")
+    parser.add_argument("--early_stopping", type=bool, default="True", help="If True decoding stops when the EOS token is reached")
     parser.add_argument("--wandb_project", type=str, default="Abstractive Summarization", help="Wandb project name")
     parser.add_argument("--wandb_entity", type=str, default="anna-kay", help="Wandb entity name")
     
     return parser
+
 
 def get_optimizer(model, learning_rate, epsilon):
     
@@ -59,7 +62,7 @@ def get_optimizer(model, learning_rate, epsilon):
     return optimizer
 
 
-def train_epoch(model, epoch, train_loader, optimizer, scheduler, device, wandb): # max_grad_norm,
+def train_epoch(model, epoch, train_loader, optimizer, max_grad_norm, scheduler, device, wandb): 
     
     model.train()
     train_loss = 0
@@ -81,7 +84,7 @@ def train_epoch(model, epoch, train_loader, optimizer, scheduler, device, wandb)
         loss.backward()
         train_loss += loss.item()
 
-        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=max_grad_norm)
 
         optimizer.step()
         scheduler.step()
@@ -96,7 +99,7 @@ def train_epoch(model, epoch, train_loader, optimizer, scheduler, device, wandb)
     return avg_train_loss, current_lr
 
 
-def train_epoch_manually_compute_grads(model, epoch, train_loader, learning_rate, device, wandb): # max_grad_norm,
+def train_epoch_manually_compute_grads(model, epoch, train_loader, max_grad_norm, learning_rate, device, wandb):
     
     model.train()
     train_loss = 0
@@ -117,7 +120,7 @@ def train_epoch_manually_compute_grads(model, epoch, train_loader, learning_rate
         loss.backward()
         train_loss += loss.item()
 
-        torch.nn.utils.clip_grad_norm_(parameters=model.parameters()) #, max_norm=max_grad_norm)
+        torch.nn.utils.clip_grad_norm_(parameters=model.parameters(), max_norm=max_grad_norm)
         
         # Manually update model parameters
         with torch.no_grad():
@@ -156,18 +159,19 @@ def evaluate_epoch(model, tokenizer, epoch, val_loader, device, max_target_lengt
 
             val_loss += outputs.loss.item() # outputs.loss.mean().item()
 
-            # Use model.generate() to generate predictions for summaries
+            # Use model.generate() with beam search decoding to generate predictions for summaries
             generated_ids = model.generate(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
-                max_length=max_target_length,  # Set this according to your target max length
-                num_beams=4,  # Beam search size (set according to preference)
+                max_length=max_target_length,  # Set according to target max length
+                num_beams=4,  # Beam search size 
                 early_stopping=True  # Stops when the EOS token is reached
             )
 
             # Decode the generated sequences to text
             decoded_preds = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
             
+            # Replace -100 in the labels as they cannot be decoded
             label_ids = np.where(label_ids != -100, label_ids, tokenizer.pad_token_id)
             decoded_labels = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
@@ -175,13 +179,10 @@ def evaluate_epoch(model, tokenizer, epoch, val_loader, device, max_target_lengt
             predictions.extend(decoded_preds)
             true_labels.extend(decoded_labels)
 
-            # # Compute predicted labels from logits
+            # # Compute predicted labels from logits -> This give the summaries that would be generated using greedy decoding
             # batch_predictions = np.argmax(logits, axis=2)
             # predictions.extend(batch_predictions.tolist())
             # true_labels.extend(label_ids.tolist())
-            
-            # TODO: clarify that this is *batch* val loss?
-            # wandb.log({"epoch": epoch+1, "batch_val_loss": val_loss})
     
     avg_val_loss = val_loss/len(val_loader)
     wandb.log({"epoch": epoch+1, "val_loss": avg_val_loss})
@@ -189,23 +190,9 @@ def evaluate_epoch(model, tokenizer, epoch, val_loader, device, max_target_lengt
     return avg_val_loss, predictions, true_labels
 
 
-def compute_metrics(predictions, labels, tokenizer):
+def compute_rouge_metrics(predictions, labels):
 
     rouge_score = load("rouge")
-    
-    # # Decode generated summaries into text
-    # decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
-    # # Replace -100 in the labels as we can't decode them
-    # labels = np.where(labels != -100, labels, tokenizer.pad_token_id)
-    # # Decode reference summaries into text
-    # decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
-    # # ROUGE expects a newline after each sentence
-    # decoded_preds = ["\n".join(sent_tokenize(pred.strip())) for pred in decoded_preds]
-    # decoded_labels = ["\n".join(sent_tokenize(label.strip())) for label in decoded_labels]
-    # # Compute ROUGE scores
-    # result = rouge_score.compute(
-    #     predictions=decoded_preds, references=decoded_labels, use_stemmer=True
-    # )
 
     decoded_preds = ["\n".join(sent_tokenize(pred.strip())) for pred in predictions]
     decoded_labels = ["\n".join(sent_tokenize(label.strip())) for label in labels]
@@ -216,7 +203,8 @@ def compute_metrics(predictions, labels, tokenizer):
 
     # Extract the median scores
     result = {key: value * 100 for key, value in result.items()}
-    return {k: round(v, 4) for k, v in result.items()}
+    
+    return {k: round(v, 3) for k, v in result.items()}
 
 
 def plot_train_val_losses(train_loss_values, val_loss_values, epochs):
@@ -233,3 +221,23 @@ def plot_train_val_losses(train_loss_values, val_loss_values, epochs):
     plt.legend()
     plt.grid(linestyle = '--')
     plt.show()
+
+
+def save_best_model(model, epoch_count, folder, best_metric):
+    
+    best_model_folder = os.path.join(".", folder, "best_model")
+    os.makedirs(best_model_folder, exist_ok=True)
+    
+    # Save the best model checkpoint           
+    model.save_pretrained(best_model_folder, "best_model")
+     
+    # Store epoch number & best scores
+    best_model_info = {
+        "epoch": epoch_count,
+        "best_metric": best_metric
+        }
+
+    with open(os.path.join(".", folder, "best_model_info.json"), "a") as outfile:
+        json.dump(best_model_info, outfile, indent=4)
+        
+    return None
