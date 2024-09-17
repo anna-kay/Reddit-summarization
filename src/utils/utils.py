@@ -28,6 +28,7 @@ def get_parser():
     parser.add_argument("--dataset_dir", type=str, default = "webis_tldr_mini", help="Directory of the dataset")
     parser.add_argument("--train_dataset_dir", type=str, default = "webis_tldr_mini_train", help="Directory for the train split of the dataset")
     parser.add_argument("--val_dataset_dir", type=str, default = "webis_tldr_mini_val", help="Directory for the validation split of the dataset")
+    parser.add_argument("--test_dataset_dir", type=str, default = "webis_tldr_mini_test", help="Directory for the test split of the dataset")
     parser.add_argument("--checkpoint", type=str, default = "microsoft/prophetnet-large-uncased", help="Hugging Face model checkpoint")
     parser.add_argument("--do_lower_case", type=bool, default=False, help="True if the model is uncased, should be defined according to checkpoint")
     parser.add_argument("--max_source_length", type=int, default=512, help="Maximal number of tokens per sequence. All sequences will be cut or padded to this length.")
