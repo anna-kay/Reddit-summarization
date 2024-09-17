@@ -167,7 +167,7 @@ def main():
         print(f"Average train loss: {avg_train_loss: .3f}")  
     
         # ------------------------ VALIDATION PART ------------------------#
-        avg_val_loss, predictions, labels = evaluate_epoch(model,
+        avg_val_loss, predictions, true_labels = evaluate_epoch(model,
                                                            tokenizer, 
                                                            epoch, 
                                                            val_loader, 
@@ -179,7 +179,7 @@ def main():
         print(f"Average val loss: {avg_val_loss: .3f}")
             
         # Print out ROUGE scores for the epoch    
-        rouge_metrics = compute_rouge_metrics(predictions, labels)
+        rouge_metrics = compute_rouge_metrics(predictions, true_labels)
         rouge_L_sum = rouge_metrics['rougeLsum']
 
         print(f"Rouge Metrics: {rouge_metrics}")     

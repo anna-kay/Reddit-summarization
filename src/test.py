@@ -104,18 +104,19 @@ def main():
     # Load best model
     print("Loading model...")
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-
     # TODO: replace the path of the model
     base_directory = os.path.abspath("best_avg_val_loss")
     model_directory = "best_model"
     path = os.path.join(base_directory, model_directory)    
 
-    model = ProphetNetForConditionalGeneration.from_pretrained(path) 
-    model.to(device)
-    model.eval()
+    model = ProphetNetForConditionalGeneration.from_pretrained(path)
 
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    model.to(device)
+    
+    model.eval()
+    
     test_loss = 0.0
     predictions, true_labels = [], []
 
@@ -162,7 +163,7 @@ def main():
     print(f"\n\nAverage test loss: {avg_test_loss: .3f}")
         
     # Print out ROUGE scores for the epoch    
-    rouge_metrics = compute_rouge_metrics(predictions, labels)
+    rouge_metrics = compute_rouge_metrics(predictions, true_labels)
     print(f"\n\nROUGE scores: {rouge_metrics}")
 
 
