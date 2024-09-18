@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 import pyarrow.parquet as pq
 from datasets import load_from_disk
 
+
 class SummarizationDataset(Dataset):
 
     def __init__(self, file_path, tokenizer, max_source_length, max_target_length):
@@ -16,7 +17,6 @@ class SummarizationDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
-
 
     def __len__(self):
         return len(self.dataset)
@@ -36,7 +36,7 @@ class SummarizationDataset(Dataset):
             return_tensors="pt",
             return_attention_mask=True,
         )
-        
+
         target_encoding = self.tokenizer(
             target_text,
             max_length=self.max_target_length,
@@ -57,4 +57,3 @@ class SummarizationDataset(Dataset):
             "attention_mask": attention_mask,
             "labels": labels
         }
-        
