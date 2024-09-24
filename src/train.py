@@ -135,16 +135,23 @@ def main():
     # generation_config = GenerationConfig(
     #     min_length=56,
     #     max_length=max_target_length,  # Set according to target max length
-    #     num_beams=4,  # Beam search size
-    #     no_repeat_ngram_size=3,
+    #     num_beams=5,  # Beam search size
+    #     no_repeat_ngram_size=2,
     #     length_penalty=2.0,
     #     early_stopping=True  # Stops when the EOS token is reached
     # )
 
-    # generation_config.save_pretrained('./generation_config')
-    generation_config = GenerationConfig.from_pretrained('./generation_config')
+    generation_config = GenerationConfig.from_pretrained(checkpoint)
 
+    generation_config.min_length=56
+    generation_config.max_length=max_target_length
+    generation_config.num_beams=4
+    generation_config.no_repeat_ngram_size=3
+    generation_config.length_penalty=2.0
+    generation_config.early_stopping=True
 
+    print(f"Generation Config: {generation_config}")
+    
     # Set optimizer and scheduler
     optimizer = get_optimizer(model, learning_rate, epsilon)
 
