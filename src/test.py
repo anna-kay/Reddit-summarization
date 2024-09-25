@@ -2,6 +2,7 @@
 import logging
 import os
 import random
+import statistics
 
 # Third-party library imports
 import numpy as np
@@ -19,6 +20,9 @@ from transformers import (
     PegasusForConditionalGeneration,
     GenerationConfig
 )
+
+from sentence_transformers import SentenceTransformer, util
+from evaluate import load
 
 # Project-specific imports
 from dataset import SummarizationDataset
@@ -81,7 +85,7 @@ def main():
                config={"learning_rate": learning_rate,
                        "architecture": checkpoint,
                        "dataset": "WEBIS-TLDR-17",
-                       "epochs": epochs,
+                       # "epochs": epochs,
                        })
 
     # Load train and validation data
@@ -94,7 +98,7 @@ def main():
                                         max_target_length)
 
     # Sample test dataset
-    test_subset = Subset(test_dataset, range(20))
+    test_subset = Subset(test_dataset, range(50))
 
     test_loader = DataLoader(test_subset,  # test_dataset
                              batch_size=batch_size)
@@ -119,7 +123,15 @@ def main():
 
     model.eval()
 
-    generation_config = GenerationConfig.from_pretrained('./generation_config')
+    # Configure Generation Config, the values will affect only the generation
+    generation_config = GenerationConfig.from_pretrained(checkpoint)
+
+    generation_config.min_length=10
+    generation_config.max_length=60
+    generation_config.num_beams=4
+    generation_config.no_repeat_ngram_size=3
+    generation_config.length_penalty=2.0
+    generation_config.early_stopping=True
 
     test_loss = 0.0
     predictions, true_labels = [], []
@@ -148,12 +160,6 @@ def main():
                 input_ids=input_ids,
                 attention_mask=attention_mask,
                 generation_config=generation_config
-                # min_length=56,
-                # max_length=max_target_length,  # Set according to target max length
-                # num_beams=4,  # Beam search size
-                # no_repeat_ngram_size=3,
-                # length_penalty=2.0,
-                # early_stopping=True  # Stops when the EOS token is reached
             )
 
             # Decode the generated sequences to text
@@ -174,10 +180,47 @@ def main():
     avg_test_loss = test_loss/len(test_loader)
     print(f"\n\nAverage test loss: {avg_test_loss: .3f}")
 
-    # Print out ROUGE scores for the epoch
+    # Print out ROUGE scores for the test set
     rouge_metrics = compute_rouge_metrics(predictions, true_labels)
     print(f"\n\nROUGE scores: {rouge_metrics}")
 
+    # Computation of Semantic Similarity using SBERT
+    # Step 1: Load the pre-trained model
+    semantic_similarity_model =  SentenceTransformer('all-mpnet-base-v2')
+    # semantic_similarity_model =  SentenceTransformer('all-MiniLM-L6-v2')
+
+    semantic_similarities = []
+    semantic_similarity_min = float("inf")
+
+    # Step 2: Define the terms
+    for sent1, sent2 in zip(predictions, true_labels):
+
+        # Step 3: Encode the terms into embeddings
+        embedding1 = semantic_similarity_model.encode(sent1, convert_to_tensor=True)
+        embedding2 = semantic_similarity_model.encode(sent2, convert_to_tensor=True)
+
+        # Step 4: Compute the cosine similarity
+        similarity = float(util.cos_sim(embedding1, embedding2))
+
+        if similarity < semantic_similarity_min:
+            semantic_similarity_min = similarity
+
+        semantic_similarities.append(similarity)        
+
+    semantic_similarity_avg = sum(semantic_similarities)/len(semantic_similarities)
+
+    print(f"\n\nSBERT Semantic similarity average: {semantic_similarity_avg}")
+    print(f"SBERT Semantic similarity minimum: {semantic_similarity_min}")
+
+    # BERTScore 
+    bertscore = load("bertscore")
+    bertscore_metrics = bertscore.compute(predictions=predictions, references=true_labels, lang="en")
+
+    bertscore_metrics_avgs = {"precision": statistics.mean(bertscore_metrics["precision"]),
+                              "recall": statistics.mean(bertscore_metrics["recall"]),
+                              "f1": statistics.mean(bertscore_metrics["f1"])}
+
+    print(f"\n\nBERTScore metrics: {bertscore_metrics_avgs}")
 
 if __name__ == "__main__":
     main()

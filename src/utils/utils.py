@@ -216,11 +216,16 @@ def compute_rouge_metrics(predictions, labels):
 
     rouge_score = load("rouge")
 
-    decoded_preds = ["\n".join(sent_tokenize(pred.strip()))
-                     for pred in predictions]
-    decoded_labels = ["\n".join(sent_tokenize(label.strip()))
-                      for label in labels]
-    # Compute ROUGE scores
+    # decoded_preds = ["\n".join(sent_tokenize(pred.strip()))
+    #                  for pred in predictions]
+    # decoded_labels = ["\n".join(sent_tokenize(label.strip()))
+    #                   for label in labels]
+    
+    # ROUGE expects a newline after each sentence
+    # [X_SEP] is a separator used in ProphetNet 
+    decoded_preds = ["\n".join(sent_tokenize(pred.replace('[X_SEP]', ' ' ).strip())) for pred in predictions]
+    decoded_labels = ["\n".join(sent_tokenize(label.replace(" .", ".").strip())) for label in labels]
+
     result = rouge_score.compute(
         predictions=decoded_preds, references=decoded_labels, use_stemmer=True
     )
@@ -229,6 +234,16 @@ def compute_rouge_metrics(predictions, labels):
     result = {key: value * 100 for key, value in result.items()}
 
     return {k: round(v, 3) for k, v in result.items()}
+
+
+def print_out_predictions_labels(predictions, labels):
+
+    with open('ground_truth_predictions.txt', 'w') as f:
+        for i in range(len(labels)):
+            print(f"Example {i+1}", file=f)
+            print(f"Ground truth: {labels[i]}", file=f)
+            print(f"Prediction: {predictions[i]}", file=f)
+            print("-" * 40, file=f)  
 
 
 def plot_train_val_losses(train_loss_values, val_loss_values, epochs):
