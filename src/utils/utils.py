@@ -1,10 +1,11 @@
 from tqdm import tqdm
 from evaluate import load
 from nltk.tokenize import sent_tokenize
+from sentence_transformers import SentenceTransformer, util
 import argparse
 import json
 import os
-from collections import Counter
+import statistics
 
 import torch
 import torch.optim as optim
@@ -234,6 +235,53 @@ def compute_rouge_metrics(predictions, labels):
     result = {key: value * 100 for key, value in result.items()}
 
     return {k: round(v, 3) for k, v in result.items()}
+
+
+def compute_semantic_similarity(predictions, true_labels):
+    # Computation of Semantic Similarity using SBERT
+    # Step 1: Load the pre-trained model
+    semantic_similarity_model =  SentenceTransformer('all-mpnet-base-v2')
+    # semantic_similarity_model =  SentenceTransformer('all-MiniLM-L6-v2')
+
+    semantic_similarities = []
+    semantic_similarity_min = float("inf")
+
+    # Step 2: Define the terms
+    for sent1, sent2 in zip(predictions, true_labels):
+
+        # Step 3: Encode the terms into embeddings
+        embedding1 = semantic_similarity_model.encode(sent1, convert_to_tensor=True)
+        embedding2 = semantic_similarity_model.encode(sent2, convert_to_tensor=True)
+
+        # Step 4: Compute the cosine similarity
+        similarity = float(util.cos_sim(embedding1, embedding2))
+
+        if similarity < semantic_similarity_min:
+            semantic_similarity_min = similarity
+
+        semantic_similarities.append(similarity)        
+
+    semantic_similarity_avg = sum(semantic_similarities)/len(semantic_similarities)
+
+    print(f"\n\nSBERT Semantic similarity average: {semantic_similarity_avg}")
+    print(f"SBERT Semantic similarity minimum: {semantic_similarity_min}")
+
+    return None
+
+
+def compute_BERTScore(predictions, true_labels):
+
+    # BERTScore 
+    bertscore = load("bertscore")
+    bertscore_metrics = bertscore.compute(predictions=predictions, references=true_labels, lang="en")
+
+    bertscore_metrics_avgs = {"precision": statistics.mean(bertscore_metrics["precision"]),
+                              "recall": statistics.mean(bertscore_metrics["recall"]),
+                              "f1": statistics.mean(bertscore_metrics["f1"])}
+
+    print(f"\n\nBERTScore metrics: {bertscore_metrics_avgs}")
+
+    return None
 
 
 def print_out_predictions_labels(predictions, labels):
