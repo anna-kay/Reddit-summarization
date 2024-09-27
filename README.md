@@ -93,3 +93,9 @@ wandb=0.16.6
 *  `notebooks` contains the .ipynb files for the Exploratory Data Analysis, the filtering of the Reddit datasets, and the replication of the results of Abstractive Summarization for the BART, PEGASUS, and ProphetNet papers
 *  `data` contains a small subset of the filtered WEBIS-TLDR-17, split into train, validation, and test (.arrow fromat)
 *  `src` contains the PyTorch code for the fine-tuning of the Transformer-based models on the Reddit datasets
+    - `dataset.py`:
+    - `train.py`:
+    - `train_without_optimizer.py`:
+    - `test.py`:
+    - `evaluation_metrics.py`:
+    - `utils`:
