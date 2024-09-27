@@ -76,6 +76,11 @@ wandb=0.16.6
 | - - EDA/
 | - - filtering/
 | - - results_replication/
+| - data/
+| - - webis_tldr_mini/
+| - - - webis_tldr_mini_train/
+| - - - webis_tldr_mini_val/
+| - - - webis_tldr_mini_test/
 | - src/
 | - - dataset.py
 | - - train.py
