@@ -36,7 +36,7 @@ No official train-val-test splits were found in the papers introducing or perfor
 webis_tldr = load_dataset('reddit', split='train')
 reddit_tifu = load_dataset('reddit_tifu', 'long', split='train')
 ```
-4. **Both datasets are noisy**<br>
+4. **Both datasets are noisy:**<br>
 As Reddit is an open platform, data quality issues are expected. In the scope of the summarization task specifically, the most revelant issues are:
   - very short summaries not proportionate to the source text,
   - users not providing a summary in the summary field but instead posting a short message prompting to read the whole source text or the title, or providing a conlusion or a general truth, or posing a question.<br>
