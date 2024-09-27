@@ -2,7 +2,6 @@
 import logging
 import os
 import random
-import statistics
 
 # Third-party library imports
 import numpy as np
@@ -25,7 +24,7 @@ from evaluate import load
 
 # Project-specific imports
 from dataset import SummarizationDataset
-from utils.utils import get_parser, compute_rouge_metrics, compute_semantic_similarity, compute_BERTScore
+from utils.utils import get_parser, calculate_metrics
 
 
 def main():
@@ -84,7 +83,6 @@ def main():
                config={"learning_rate": learning_rate,
                        "architecture": checkpoint,
                        "dataset": "WEBIS-TLDR-17",
-                       # "epochs": epochs,
                        })
 
     # Load train and validation data
@@ -179,13 +177,13 @@ def main():
     avg_test_loss = test_loss/len(test_loader)
     print(f"\n\nAverage test loss: {avg_test_loss: .3f}")
 
-    # Print out ROUGE scores for the test set
-    rouge_metrics = compute_rouge_metrics(predictions, true_labels)
-    print(f"\n\nROUGE scores: {rouge_metrics}")
+    # Print out metrics for the epoch
+    labels = true_labels
 
-    compute_semantic_similarity(predictions, true_labels)
+    metrics = calculate_metrics(predictions, labels)
 
-    compute_BERTScore(predictions, true_labels)
+    print(f"Metrics: {metrics}")
+    wandb.log({"Metrics": metrics})
 
 if __name__ == "__main__":
     main()

@@ -63,6 +63,8 @@ def get_parser():
     return parser
 
 
+# -------------------------------- TRAINING UTILS -------------------------------- #
+
 def get_optimizer(model, learning_rate, epsilon):
 
     param_optimizer = list(model.named_parameters())
@@ -213,7 +215,62 @@ def evaluate_epoch(model, tokenizer, epoch, val_loader, device, generation_confi
     return avg_val_loss, predictions, true_labels
 
 
-def compute_rouge_metrics(predictions, labels):
+def save_best_model(model, epoch_count, folder, best_metric):
+
+    best_model_folder = os.path.join(".", folder, "best_model")
+    os.makedirs(best_model_folder, exist_ok=True)
+
+    # Save the best model checkpoint
+    model.save_pretrained(best_model_folder, "best_model")
+
+    # Store epoch number & best scores
+    best_model_info = {
+        "epoch": epoch_count,
+        "best_metric": best_metric
+    }
+
+    with open(os.path.join(".", folder, "best_model_info.json"), "a") as outfile:
+        json.dump(best_model_info, outfile, indent=4)
+
+    return None
+
+
+# -------------------------------- PLOTTING UTILS -------------------------------- #
+
+def plot_train_val_losses(train_loss_values, val_loss_values, epochs):
+
+    x = range(1, epochs+1)
+
+    plt.title("Training & Validation Losses")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+
+    plt.xticks(x)
+    plt.plot(x, train_loss_values, marker='o', label='train loss')
+    plt.plot(x, val_loss_values, marker='o', label='valid loss')
+    plt.legend()
+    plt.grid(linestyle='--')
+    plt.show()
+
+
+# -------------------------------- METRICS EVALUATION UTILS -------------------------------- #
+
+def calculate_metrics(predictions, labels):
+
+    rouge_scores = calculate_rouge_metrics(predictions, labels)
+
+    semantic_similarity_scores = calculate_semantic_similarity(predictions, labels)
+
+    BERTScore = calculate_BERTScore(predictions, labels)
+
+    return {
+            "ROUGE": rouge_scores,
+            "Semantic similarity": semantic_similarity_scores,
+            "BERTScore": BERTScore
+            }
+
+
+def calculate_rouge_metrics(predictions, labels):
 
     rouge_score = load("rouge")
 
@@ -237,17 +294,17 @@ def compute_rouge_metrics(predictions, labels):
     return {k: round(v, 3) for k, v in result.items()}
 
 
-def compute_semantic_similarity(predictions, true_labels):
+def calculate_semantic_similarity(predictions, labels):
     # Computation of Semantic Similarity using SBERT
     # Step 1: Load the pre-trained model
-    semantic_similarity_model =  SentenceTransformer('all-mpnet-base-v2')
-    # semantic_similarity_model =  SentenceTransformer('all-MiniLM-L6-v2')
+    semantic_similarity_model = SentenceTransformer('all-mpnet-base-v2')
+    # semantic_similarity_model = SentenceTransformer('all-MiniLM-L6-v2')
 
     semantic_similarities = []
     semantic_similarity_min = float("inf")
 
     # Step 2: Define the terms
-    for sent1, sent2 in zip(predictions, true_labels):
+    for sent1, sent2 in zip(predictions, labels):
 
         # Step 3: Encode the terms into embeddings
         embedding1 = semantic_similarity_model.encode(sent1, convert_to_tensor=True)
@@ -263,25 +320,23 @@ def compute_semantic_similarity(predictions, true_labels):
 
     semantic_similarity_avg = sum(semantic_similarities)/len(semantic_similarities)
 
-    print(f"\n\nSBERT Semantic similarity average: {semantic_similarity_avg}")
-    print(f"SBERT Semantic similarity minimum: {semantic_similarity_min}")
+    return {
+            "semantic_similarity_avg": semantic_similarity_avg,
+            "semantic_similarity_min": semantic_similarity_min
+            } 
 
-    return None
 
-
-def compute_BERTScore(predictions, true_labels):
+def calculate_BERTScore(predictions, labels):
 
     # BERTScore 
     bertscore = load("bertscore")
-    bertscore_metrics = bertscore.compute(predictions=predictions, references=true_labels, lang="en")
+    bertscore_metrics = bertscore.compute(predictions=predictions, references=labels, lang="en")
 
     bertscore_metrics_avgs = {"precision": statistics.mean(bertscore_metrics["precision"]),
                               "recall": statistics.mean(bertscore_metrics["recall"]),
                               "f1": statistics.mean(bertscore_metrics["f1"])}
 
-    print(f"\n\nBERTScore metrics: {bertscore_metrics_avgs}")
-
-    return None
+    return bertscore_metrics_avgs
 
 
 def print_out_predictions_labels(predictions, labels):
@@ -294,37 +349,6 @@ def print_out_predictions_labels(predictions, labels):
             print("-" * 40, file=f)  
 
 
-def plot_train_val_losses(train_loss_values, val_loss_values, epochs):
-
-    x = range(1, epochs+1)
-
-    plt.title("Training & Validation Losses")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-
-    plt.xticks(x)
-    plt.plot(x, train_loss_values, marker='o', label='train loss')
-    plt.plot(x, val_loss_values, marker='o', label='valid loss')
-    plt.legend()
-    plt.grid(linestyle='--')
-    plt.show()
 
 
-def save_best_model(model, epoch_count, folder, best_metric):
 
-    best_model_folder = os.path.join(".", folder, "best_model")
-    os.makedirs(best_model_folder, exist_ok=True)
-
-    # Save the best model checkpoint
-    model.save_pretrained(best_model_folder, "best_model")
-
-    # Store epoch number & best scores
-    best_model_info = {
-        "epoch": epoch_count,
-        "best_metric": best_metric
-    }
-
-    with open(os.path.join(".", folder, "best_model_info.json"), "a") as outfile:
-        json.dump(best_model_info, outfile, indent=4)
-
-    return None

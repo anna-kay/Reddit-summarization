@@ -27,9 +27,9 @@ from utils.utils import (get_parser,
                          get_optimizer,
                          plot_train_val_losses,
                          train_epoch, evaluate_epoch,
-                         compute_rouge_metrics,
+                         save_best_model,
+                         calculate_metrics,
                          print_out_predictions_labels,
-                         save_best_model
                          )
 
 
@@ -188,7 +188,7 @@ def main():
         print(f"Average train loss: {avg_train_loss: .3f}")
 
         # ------------------------ VALIDATION PART ------------------------ #
-        avg_val_loss, predictions, true_labels = evaluate_epoch(model,
+        avg_val_loss, predictions, labels = evaluate_epoch(model,
                                                                 tokenizer,
                                                                 epoch,
                                                                 val_loader,
@@ -199,14 +199,14 @@ def main():
 
         print(f"Average val loss: {avg_val_loss: .3f}")
 
-        # Print out ROUGE scores for the epoch
-        rouge_metrics = compute_rouge_metrics(predictions, true_labels)
-        rouge_L_sum = rouge_metrics['rougeLsum']
+        # Print out metrics for the epoch
+        metrics = calculate_metrics(predictions, labels)
+        rouge_L_sum = metrics['ROUGE']['rougeLsum']
 
-        print(f"Rouge Metrics: {rouge_metrics}")
-        wandb.log({"Rouge Metrics": rouge_metrics})
+        print(f"Metrics: {metrics}")
+        wandb.log({"Metrics": metrics})
 
-        print_out_predictions_labels(predictions, true_labels)
+        print_out_predictions_labels(predictions, labels)
 
         # Check scores and store the best
         if avg_val_loss < best_val_loss:
@@ -220,7 +220,7 @@ def main():
 
         if rouge_L_sum > best_rouge_score:
             # Update the best rouge score
-            best_rouge_scores = rouge_metrics
+            best_rouge_scores = metrics['ROUGE']
             # Store the best (according to rouge_L_sum) model checkpoint & info
             save_best_model(model,
                             epoch_count,
