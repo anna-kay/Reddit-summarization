@@ -86,7 +86,6 @@ wandb=0.16.6
 | - - train.py
 | - - train_without_optimizer.py
 | - - test.py
-| - - evaluation_metrics.py
 | - - utils/
 ```
 
@@ -94,9 +93,8 @@ wandb=0.16.6
 *  `notebooks` contains the .ipynb files for the Exploratory Data Analysis, the filtering of the Reddit datasets, and the replication of the results of Abstractive Summarization for the BART, PEGASUS, and ProphetNet papers
 *  `data` contains a small subset of the filtered WEBIS-TLDR-17, split into train, validation, and test (in .arrow fromat)
 *  `src` contains the PyTorch code for the fine-tuning of the Transformer-based models on the Reddit datasets
-    - `dataset.py`:
+    - `dataset.py`: Defines the SummarizationDataset pytorch class for WEBIS-TLDR-17 data
     - `train.py`:
     - `train_without_optimizer.py`:
     - `test.py`:
-    - `evaluation_metrics.py`:
-    - `utils`:
+    - `utils`: contains the functions for getting the optimizer, training an epoch, evaluation an epoch, saving the best model, plotting train-validation losses, and comupting the evaluation metrics
