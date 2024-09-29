@@ -69,7 +69,7 @@ wandb=0.16.6
 
 ## How to run
 
-`
+```
 # Clone the repository
 git clone https://github.com/anna-kay/Reddit-summarization.git
 
@@ -83,7 +83,7 @@ train.py
 
 # To evaluate
 test.py
-`
+```
 
 ## Project Structure 
 ```
