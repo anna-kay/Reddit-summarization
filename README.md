@@ -107,13 +107,13 @@ wandb=0.16.6
 git clone https://github.com/anna-kay/Reddit-summarization.git
 
 # Change into the project directory
-cd Reddit-summarization
+cd Reddit-summarization/src
 
 # Install dependencies
 
 # To train
-train.py 
+python train.py 
 
 # To evaluate
-test.py
+python test.py
 ```
