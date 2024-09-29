@@ -51,21 +51,14 @@ These issues render these data points actually not suitable for training summari
 
 ## Dependencies
 
-(python=3.10)
-
-torch=2.4.1
-
-transformers=4.44.1
-
-nltk=3.9.1
-
-matplotlib=3.9.2
-
-evaluate=0.4.1
-
-tqdm=4.66.5
-
-wandb=0.16.6
+- **python** (v3.10)
+- **torch** (v2.4.1)
+- **transformers** (v4.44.1)
+- **nltk** (v3.9.1)
+- **matplotlib** (v3.9.2)
+- **evaluate** (v0.4.1)
+- **tqdm** (v4.66.5)
+- **wandb** (v0.16.6)
 
 
 ## Project Structure 
