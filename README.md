@@ -67,23 +67,6 @@ tqdm=4.66.5
 
 wandb=0.16.6
 
-## How to run
-
-```
-# Clone the repository
-git clone https://github.com/anna-kay/Reddit-summarization.git
-
-# Change into the project directory
-cd Reddit-summarization
-
-# Install dependencies
-
-# To train
-train.py 
-
-# To evaluate
-test.py
-```
 
 ## Project Structure 
 ```
@@ -115,3 +98,22 @@ test.py
     - `train_without_optimizer.py`
     - `test.py`
     - `utils`: contains the functions for getting the optimizer, training an epoch, evaluation an epoch, saving the best model, plotting train-validation losses, and comupting the evaluation metrics
+
+
+ ## How to run
+
+```
+# Clone the repository
+git clone https://github.com/anna-kay/Reddit-summarization.git
+
+# Change into the project directory
+cd Reddit-summarization
+
+# Install dependencies
+
+# To train
+train.py 
+
+# To evaluate
+test.py
+```
