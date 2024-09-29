@@ -108,9 +108,9 @@ cd Reddit-summarization/src
 
 # Install dependencies
 
-# To train
+# Train
 python train.py 
 
-# To evaluate
+# Evaluate on testset
 python test.py
 ```
