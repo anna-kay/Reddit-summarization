@@ -63,7 +63,7 @@ These issues render these data points actually not suitable for training summari
 - **wandb** (v0.16.6)
 - **bert-score** (v0.3.13)
 - **sentence-transformers** (v3.0.1)
-
+- **CUDA** (v11.8) – Required for GPU acceleration with PyTorch
 
 ## Project Structure 
 ```
