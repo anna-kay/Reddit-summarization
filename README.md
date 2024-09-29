@@ -55,10 +55,14 @@ These issues render these data points actually not suitable for training summari
 - **torch** (v2.4.1)
 - **transformers** (v4.44.1)
 - **nltk** (v3.9.1)
+- **sentencepiece** (v0.2.0)
+- **scikit-learn** (v1.5.2)
 - **matplotlib** (v3.9.2)
 - **evaluate** (v0.4.1)
 - **tqdm** (v4.66.5)
 - **wandb** (v0.16.6)
+- **bert-score** (v0.3.13)
+- **sentence-transformers** (v3.0.1)
 
 
 ## Project Structure 
