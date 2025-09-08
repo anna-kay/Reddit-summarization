@@ -14,7 +14,7 @@ All datasets and models checkpoints used in the project are downloaded from Hugg
 
 **Datasets:**
 1. **Webis-TLDR-17**, https://aclanthology.org/W17-4508/ (paper), https://huggingface.co/datasets/webis/tldr-17 (🤗 dataset card)
-2. **Reddit TIFU**, https://arxiv.org/abs/1811.00783 (paper), [https://huggingface.co/datasets/reddit_tifu](https://huggingface.co/datasets/ctr4si/reddit_tifu) (🤗 dataset card)
+2. **Reddit TIFU**, https://arxiv.org/abs/1811.00783 (paper), https://huggingface.co/datasets/ctr4si/reddit_tifu (🤗 dataset card)
 <br>
 
 | Dataset | Subreddit | Time Span | Size | Fields |
